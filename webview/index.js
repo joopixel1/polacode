@@ -229,9 +229,8 @@
           snippetContainerNode.style.background = 'none'
         }
 
-      } else if (e.data.type === 'update') {
-        document.execCommand('paste')
-      } else if (e.data.type === 'restore') {
+      }
+      else if (e.data.type === 'restore') {
         snippetNode.innerHTML = e.data.innerHTML
         updateEnvironment(e.data.bgColor)
       } else if (e.data.type === 'restoreBgColor') {

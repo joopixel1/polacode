@@ -19,7 +19,10 @@ function activate(context) {
   let lastUsedImageUri = vscode.Uri.file(path.resolve(homedir(), 'Desktop/code.png'))
   let panel
 
-  vscode.window.registerWebviewPanelSerializer('polacode', {
+  /**
+   * serializer for storing state of webviewpanel
+   */
+  context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('polacode', {
     async deserializeWebviewPanel(_panel, state) {
       panel = _panel
       panel.webview.html = getHtmlContent(htmlPath)
@@ -34,9 +37,12 @@ function activate(context) {
       })
       setupMessageListeners()
     }
-  })
+  }))
 
-  vscode.commands.registerCommand('polacode.activate', () => {
+  /**
+   * activate placode.activate
+   */
+  context.subscriptions.push(vscode.commands.registerCommand('polacode.activate', () => {
     panel = vscode.window.createWebviewPanel('polacode', P_TITLE, 2, {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'webview'))]
@@ -60,14 +66,30 @@ function activate(context) {
     })
 
     syncSettings()
-  })
+  }))
 
-  vscode.workspace.onDidChangeConfiguration(e => {
-    if (e.affectsConfiguration('polacode') || e.affectsConfiguration('editor')) {
-      syncSettings()
-    }
-  })
 
+
+  /**
+   * if configuration changes, let webview panel know using syncSettings()
+   */
+  vscode.workspace.onDidChangeConfiguration(
+    e => {
+      if (e.affectsConfiguration('polacode') || e.affectsConfiguration('editor')) {
+        syncSettings()
+      }
+    },
+    context.subscriptions
+  )
+
+  /**
+   * defines responses for the eztension, when it receives messages from the webview.
+   * This extension has response for:
+   * 'shoot' -> for when u press the save button, 
+   * 'updateBgColor' -> update bgColor value in global state, 
+   * 'invalidPasteContent' -> u can guess this,
+   *  'getAndUpdateCacheAndSettings' -> # TODO, not sure yet. I think sends the color in settingd back to the webview
+   */
   function setupMessageListeners() {
     panel.webview.onDidReceiveMessage(({ type, data }) => {
       switch (type) {
@@ -105,7 +127,10 @@ function activate(context) {
       }
     })
   }
-
+  
+  /**
+   * pushes configurations in settings into webview panel
+   */
   function syncSettings() {
     const settings = vscode.workspace.getConfiguration('polacode')
     const editorSettings = vscode.workspace.getConfiguration('editor', null)
@@ -119,18 +144,25 @@ function activate(context) {
     })
   }
 
+  /**
+   * notifies the webview panel when the selection in the textEditor changes
+   */
   function setupSelectionSync() {
     return vscode.window.onDidChangeTextEditorSelection(e => {
       if (e.selections[0] && !e.selections[0].isEmpty) {
         vscode.commands.executeCommand('editor.action.clipboardCopyWithSyntaxHighlightingAction')
-        panel.postMessage({
-          type: 'update'
-        })
       }
     })
   }
 }
 
+/**
+ * Discovered that when the extension is deployed, the src in the index.html becomes wrong,
+ * so we update dat in this function.
+ * 
+ * @param {basepath for the extensions index.html} htmlPath 
+ * @returns 
+ */
 function getHtmlContent(htmlPath) {
   const htmlContent = fs.readFileSync(htmlPath, 'utf-8')
   return htmlContent.replace(/script src="([^"]*)"/g, (match, src) => {
@@ -138,5 +170,7 @@ function getHtmlContent(htmlPath) {
     return `script src="${realSource}"`
   })
 }
+
+
 
 exports.activate = activate

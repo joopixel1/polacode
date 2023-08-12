@@ -36,8 +36,13 @@
       {
         "command": "polacode.activate",
         "title": "Polacode 📸"
+      },
+      {
+        "command": "polacode.takePolacode",
+        "title": "Polacode 📸"
       }
     ],
+
     "configuration": {
       "title": "Polacode",
       "properties": {
@@ -71,6 +76,27 @@
           ]
         }
       }
+    },
+
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "polacode.activate",
+          "when": "!editorHasSelection"
+        },
+        {
+          "command": "polacode.takePolacode",
+          "when": "editorHasSelection"
+        }
+      ],
+
+      "editor/content": [
+        {
+          "command": "polacode.takePolacode",
+          "when": "editorHasSelection",
+          "group": "9_cutcopypaste"
+        }
+      ]
     }
   },
   "devDependencies": {
